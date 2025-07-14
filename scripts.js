@@ -1,12 +1,11 @@
-// Данные видео
-let videoData = []; // Будет загружено из videos.json
-
-// Пользовательские данные
+let videoData = [];
 let currentUser = null;
-let users = []; // Будет загружено с сервера
-let studioVideos = JSON.parse(localStorage.getItem('chebtube_studio_videos')) || [];
+let users = [];
 
-// DOM элементы (глобальные, которые нужны на обеих страницах или для общих функций)
+// Переменная для файла превью
+let thumbnailFile = null;
+
+// DOM элементы
 const userAvatar = document.getElementById('user-avatar');
 const userMenu = document.getElementById('user-menu');
 const loginBtn = document.getElementById('login-btn');
@@ -25,7 +24,7 @@ const searchBtn = document.getElementById('search-btn');
 const searchInput = document.getElementById('search-input');
 const startWatching = document.getElementById('start-watching');
 
-// Элементы для модального окна загрузки видео (если оно общее)
+// Элементы модального окна загрузки
 const uploadModal = document.getElementById('upload-modal');
 const closeUpload = document.getElementById('close-upload');
 const cancelUpload = document.getElementById('cancel-upload');
@@ -38,88 +37,89 @@ const uploadStatus = document.getElementById('upload-status');
 const videoTitleInput = document.getElementById('video-title');
 const videoDescInput = document.getElementById('video-desc');
 
-// Элементы, специфичные для index.html
-const mainSidebar = document.getElementById('main-sidebar');
-const mainContent = document.getElementById('main-content');
+// Элементы index.html
 const featuredVideosContainer = document.getElementById('featured-videos');
 const trendingVideosContainer = document.getElementById('trending-videos');
 
-// Элементы, специфичные для studio.html
-const studioContainer = document.getElementById('studio-container');
-const studioSidebar = document.getElementById('studio-sidebar');
-const studioMain = document.getElementById('studio-main');
-const uploadBtn = document.getElementById('upload-btn'); // Кнопка загрузки на странице студии
+// Элементы studio.html
+const uploadBtn = document.getElementById('upload-btn');
 const studioGrid = document.getElementById('studio-grid');
 
-// *************** КОНСТАНТА ДЛЯ АДРЕСА СЕРВЕРА ***************
-// Важно: Замените 'http://localhost:3000' на реальный адрес вашего сервера,
-// где будет запущен ваш Node.js (или другой бэкенд) сервер.
+// АДРЕС СЕРВЕРА
 const SERVER_URL = 'https://impuls21.ru'; 
-// *************************************************************
-
 
 // Загрузка данных при старте
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadData();
-    updateUserUI();
+    await loadDataFromServer();
+    updateUserUI(); // Обновляем UI после загрузки данных и определения пользователя
 
-    // Определяем, на какой странице мы находимся
+    // Определяем страницу и генерируем контент
     if (document.body.classList.contains('index-page')) {
-        generateVideoCards(featuredVideosContainer, 6, videoData);
+        generateVideoCards(featuredVideosContainer, 12, videoData);
         generateVideoCards(trendingVideosContainer, 6, videoData);
-
-        // Обработка параметра action из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('action')) {
-            const action = urlParams.get('action');
-            if (action === 'login') {
-                if (loginBtn) loginBtn.click();
-            } else if (action === 'register') {
-                if (registerBtn) registerBtn.click();
-            }
-        }
-
+        handleUrlActions();
     } else if (document.body.classList.contains('studio-page')) {
-        generateStudioVideos();
+        if (currentUser) {
+            const myVideos = videoData.filter(v => v.channel === currentUser.name);
+            generateStudioVideos(myVideos);
+        } else {
+            generateStudioVideos([]); // Показать заглушку если не вошел
+        }
     }
 });
 
-async function loadData() {
+async function loadDataFromServer() {
     try {
-        const videoResponse = await fetch('videos.json');
-        videoData = await videoResponse.json();
+        const [videoResponse, userResponse] = await Promise.all([
+            fetch(`${SERVER_URL}/api/videos`),
+            fetch(`${SERVER_URL}/api/users`)
+        ]);
 
-        // Загрузка пользователей с сервера
-        const userResponse = await fetch(`${SERVER_URL}/api/users`);
+        if (!videoResponse.ok || !userResponse.ok) {
+            throw new Error('Ошибка сети при загрузке данных');
+        }
+
+        videoData = await videoResponse.json();
         users = await userResponse.json();
 
-        // Проверка авторизации
+        // Проверка авторизации из localStorage
         const savedUser = localStorage.getItem('chebtube_current_user');
         if (savedUser) {
             currentUser = JSON.parse(savedUser);
         }
     } catch (error) {
-        console.error('Ошибка загрузки данных:', error);
-        // Если сервер недоступен, можно оставить `users` пустым
+        console.error('Ошибка загрузки данных с сервера:', error);
+        videoData = [];
         users = [];
     }
 }
 
-// Генерация видео карточек (для главной страницы)
+function handleUrlActions() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    if (action === 'login' && loginBtn) {
+        loginBtn.click();
+    } else if (action === 'register' && registerBtn) {
+        registerBtn.click();
+    }
+    // Очистить параметры из URL, чтобы они не мешали при перезагрузке
+    if (action) {
+       window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
+// Генерация карточек видео на главной
 function generateVideoCards(container, count, data) {
-    if (!container) return; // Проверка, что элемент существует
+    if (!container) return;
     container.innerHTML = '';
-    
     const shuffled = [...data].sort(() => 0.5 - Math.random());
-    
     for (let i = 0; i < count && i < shuffled.length; i++) {
         const video = shuffled[i];
         const card = document.createElement('div');
         card.className = 'video-card';
-        
         card.innerHTML = `
             <div class="thumbnail">
-                <img src="${video.thumbnail}" alt="${video.title}">
+                <img src="${SERVER_URL}${video.thumbnail}" alt="${video.title}">
                 <div class="duration">${video.duration}</div>
             </div>
             <div class="video-info">
@@ -138,47 +138,43 @@ function generateVideoCards(container, count, data) {
     }
 }
 
-// Генерация видео в студии (для страницы студии)
-function generateStudioVideos() {
-    if (!studioGrid) return; // Проверка, что элемент существует
+// Генерация видео в студии
+function generateStudioVideos(videos) {
+    if (!studioGrid) return;
     studioGrid.innerHTML = '';
     
-    if (studioVideos.length === 0) {
+    if (!currentUser) {
+         studioGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 60px 20px;"><h3>Для доступа к студии необходимо войти в систему.</h3></div>`;
+         return;
+    }
+
+    if (videos.length === 0) {
         studioGrid.innerHTML = `
             <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
                 <i class="fas fa-video" style="font-size: 80px; color: #555; margin-bottom: 20px;"></i>
                 <h3>У вас пока нет загруженных видео</h3>
                 <p>Нажмите кнопку "Загрузить видео", чтобы добавить свое первое видео</p>
-                <button class="upload-btn" style="margin-top: 20px;" id="upload-btn-placeholder">
-                    <i class="fas fa-upload"></i>
-                    Загрузить видео
+                <button class="upload-btn" style="margin-top: 20px;" onclick="document.getElementById('upload-btn').click();">
+                    <i class="fas fa-upload"></i> Загрузить видео
                 </button>
             </div>
         `;
-        // Добавляем слушатель к кнопке-заглушке, если она создана
-        document.getElementById('upload-btn-placeholder')?.addEventListener('click', openUploadModal);
         return;
     }
     
-    studioVideos.forEach(video => {
+    videos.forEach(video => {
         const card = document.createElement('div');
         card.className = 'studio-card';
-        
         card.innerHTML = `
             <div class="studio-thumb">
-                <img src="${video.thumbnail}" alt="${video.title}">
+                <img src="${SERVER_URL}${video.thumbnail}" alt="${video.title}">
             </div>
             <div class="studio-card-info">
                 <h3 class="studio-card-title">${video.title}</h3>
                 <p style="color: #aaa; font-size: 14px; margin: 10px 0;">${video.description || 'Без описания'}</p>
                 <div class="studio-card-stats">
-                    <div class="stat-item">
-                        <i class="fas fa-eye"></i> ${video.views} просмотров
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-clock"></i> ${video.date}
-                        <span class="badge">${video.status}</span>
-                    </div>
+                    <div class="stat-item"><i class="fas fa-eye"></i> ${video.views} просмотров</div>
+                    <div class="stat-item"><i class="fas fa-clock"></i> ${video.date} <span class="badge">${video.status}</span></div>
                 </div>
             </div>
         `;
@@ -186,375 +182,242 @@ function generateStudioVideos() {
     });
 }
 
-// Обновление UI в зависимости от состояния пользователя (для обеих страниц)
+// Обновление UI пользователя
 function updateUserUI() {
-    // Обновление для главной страницы
-    if (userAvatar && loginBtn && registerBtn && logoutBtn && myChannelBtn) {
-        if (currentUser) {
-            userAvatar.textContent = currentUser.name.charAt(0);
-            loginBtn.style.display = 'none';
-            registerBtn.style.display = 'none';
-            logoutBtn.style.display = 'block';
-            myChannelBtn.style.display = 'block';
-        } else {
-            userAvatar.textContent = '?';
-            loginBtn.style.display = 'block';
-            registerBtn.style.display = 'block';
-            logoutBtn.style.display = 'none';
-            myChannelBtn.style.display = 'none';
-        }
+    const isStudio = document.body.classList.contains('studio-page');
+    const avatarEl = document.getElementById(isStudio ? 'user-avatar-studio' : 'user-avatar');
+    const menuEl = document.getElementById(isStudio ? 'user-menu-studio' : 'user-menu');
+    
+    if (currentUser) {
+        avatarEl.textContent = currentUser.name.charAt(0);
+        menuEl.querySelector(isStudio ? '#login-btn-studio' : '#login-btn').style.display = 'none';
+        menuEl.querySelector(isStudio ? '#register-btn-studio' : '#register-btn').style.display = 'none';
+        menuEl.querySelector(isStudio ? '#logout-btn-studio' : '#logout-btn').style.display = 'block';
+        menuEl.querySelector(isStudio ? '#my-channel-btn-studio' : '#my-channel-btn').style.display = 'block';
+    } else {
+        avatarEl.textContent = '?';
+        menuEl.querySelector(isStudio ? '#login-btn-studio' : '#login-btn').style.display = 'block';
+        menuEl.querySelector(isStudio ? '#register-btn-studio' : '#register-btn').style.display = 'block';
+        menuEl.querySelector(isStudio ? '#logout-btn-studio' : '#logout-btn').style.display = 'none';
+        menuEl.querySelector(isStudio ? '#my-channel-btn-studio' : '#my-channel-btn').style.display = 'none';
     }
-    // Также можно добавить логику для элементов на studio.html, если их ID отличаются
-    // (см. updateUserUIForStudio в studio.html, если решите дублировать DOM элементы)
 }
 
-// Показать/скрыть меню пользователя
-if (userAvatar) {
-    userAvatar.addEventListener('click', function(e) {
+// --- ОБРАБОТЧИКИ СОБЫТИЙ ---
+
+// Открытие/закрытие меню пользователя
+document.querySelectorAll('.user-avatar').forEach(avatar => {
+    avatar.addEventListener('click', (e) => {
         e.stopPropagation();
-        userMenu.classList.toggle('active');
+        const menu = avatar.nextElementSibling;
+        menu.classList.toggle('active');
     });
-}
+});
 
-// Закрыть меню при клике вне его
-document.addEventListener('click', function(e) {
-    if (userMenu && !userMenu.contains(e.target) && e.target !== userAvatar) {
-        userMenu.classList.remove('active');
+document.addEventListener('click', (e) => {
+    document.querySelectorAll('.user-menu').forEach(menu => {
+        if (!menu.contains(e.target) && !menu.previousElementSibling.contains(e.target)) {
+            menu.classList.remove('active');
+        }
+    });
+});
+
+// Открытие форм входа/регистрации
+if (loginBtn) loginBtn.addEventListener('click', () => { authContainer.style.display = 'flex'; loginTab.click(); });
+if (registerBtn) registerBtn.addEventListener('click', () => { authContainer.style.display = 'flex'; registerTab.click(); });
+
+// Переключение вкладок
+if (loginTab) loginTab.addEventListener('click', () => {
+    loginForm.style.display = 'block'; registerForm.style.display = 'none';
+    loginTab.classList.add('active'); registerTab.classList.remove('active');
+});
+if (registerTab) registerTab.addEventListener('click', () => {
+    loginForm.style.display = 'none'; registerForm.style.display = 'block';
+    registerTab.classList.add('active'); loginTab.classList.remove('active');
+});
+
+// Закрытие модальных окон
+if (closeAuth) closeAuth.addEventListener('click', () => { authContainer.style.display = 'none'; });
+if (closeUpload) closeUpload.addEventListener('click', () => { uploadModal.style.display = 'none'; });
+if (cancelUpload) cancelUpload.addEventListener('click', () => { uploadModal.style.display = 'none'; });
+
+// Обработка форм
+if (loginForm) loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    try {
+        const response = await fetch(`${SERVER_URL}/api/login`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message);
+        
+        currentUser = data.user;
+        localStorage.setItem('chebtube_current_user', JSON.stringify(currentUser));
+        updateUserUI();
+        authContainer.style.display = 'none';
+        alert(`Добро пожаловать, ${currentUser.name}!`);
+        window.location.reload(); // Перезагружаем для обновления контента
+    } catch (error) {
+        alert(`Ошибка входа: ${error.message}`);
     }
 });
 
-// Показать форму входа
-if (loginBtn) {
-    loginBtn.addEventListener('click', function() {
-        authContainer.style.display = 'flex';
-        loginForm.style.display = 'block';
-        registerForm.style.display = 'none';
-        loginTab.classList.add('active');
-        registerTab.classList.remove('active');
-    });
-}
-
-// Показать форму регистрации
-if (registerBtn) {
-    registerBtn.addEventListener('click', function() {
-        authContainer.style.display = 'flex';
-        loginForm.style.display = 'none';
-        registerForm.style.display = 'block';
-        registerTab.classList.add('active');
-        loginTab.classList.remove('active');
-    });
-}
-
-// Переключение между вкладками входа и регистрации
-if (loginTab) {
-    loginTab.addEventListener('click', function() {
-        loginForm.style.display = 'block';
-        registerForm.style.display = 'none';
-        loginTab.classList.add('active');
-        registerTab.classList.remove('active');
-    });
-}
-if (registerTab) {
-    registerTab.addEventListener('click', function() {
-        loginForm.style.display = 'none';
-        registerForm.style.display = 'block';
-        registerTab.classList.add('active');
-        loginTab.classList.remove('active');
-    });
-}
-
-// Закрыть форму авторизации
-if (closeAuth) {
-    closeAuth.addEventListener('click', function() {
+if (registerForm) registerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('register-name').value;
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+    if (password !== document.getElementById('register-confirm').value) {
+        return alert('Пароли не совпадают');
+    }
+    try {
+        const response = await fetch(`${SERVER_URL}/api/register`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message);
+        
+        currentUser = data.user;
+        localStorage.setItem('chebtube_current_user', JSON.stringify(currentUser));
+        updateUserUI();
         authContainer.style.display = 'none';
-    });
-}
+        alert(`Регистрация прошла успешно, ${currentUser.name}!`);
+        window.location.reload(); // Перезагружаем
+    } catch (error) {
+        alert(`Ошибка регистрации: ${error.message}`);
+    }
+});
 
-// Обработка входа
-if (loginForm) {
-    loginForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-        
-        try {
-            const response = await fetch(`${SERVER_URL}/api/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                currentUser = data.user;
-                localStorage.setItem('chebtube_current_user', JSON.stringify(currentUser));
-                updateUserUI();
-                authContainer.style.display = 'none';
-                alert(`Добро пожаловать, ${currentUser.name}!`);
-            } else {
-                alert(`Ошибка входа: ${data.message || 'Неизвестная ошибка'}`);
-            }
-        } catch (error) {
-            console.error('Ошибка сети при входе:', error);
-            alert('Ошибка сети. Попробуйте позже.');
-        }
-    });
-}
-
-// Обработка регистрации
-if (registerForm) {
-    registerForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const name = document.getElementById('register-name').value;
-        const email = document.getElementById('register-email').value;
-        const password = document.getElementById('register-password').value;
-        const confirm = document.getElementById('register-confirm').value;
-        
-        if (password !== confirm) {
-            alert('Пароли не совпадают');
-            return;
-        }
-        
-        try {
-            const response = await fetch(`${SERVER_URL}/api/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name, email, password })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                currentUser = data.user;
-                localStorage.setItem('chebtube_current_user', JSON.stringify(currentUser));
-                users.push(currentUser); // Добавляем в локальный массив для текущей сессии
-                updateUserUI();
-                authContainer.style.display = 'none';
-                alert(`Регистрация прошла успешно, ${currentUser.name}!`);
-            } else {
-                alert(`Ошибка регистрации: ${data.message || 'Неизвестная ошибка'}`);
-            }
-        } catch (error) {
-            console.error('Ошибка сети при регистрации:', error);
-            alert('Ошибка сети. Попробуйте позже.');
-        }
-    });
-}
-
-// Выход из системы
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', function() {
+// Выход
+document.querySelectorAll('#logout-btn, #logout-btn-studio').forEach(btn => {
+    btn.addEventListener('click', () => {
         currentUser = null;
         localStorage.removeItem('chebtube_current_user');
         updateUserUI();
         alert('Вы вышли из системы');
-        if (userMenu) userMenu.classList.remove('active');
-        
-        // Если находимся в студии - вернуться на главную
-        if (studioContainer && studioContainer.style.display === 'flex') {
+        if (document.body.classList.contains('studio-page')) {
             window.location.href = 'index.html';
+        } else {
+             window.location.reload();
         }
     });
-}
+});
 
-// Переход в студию
-if (studioLink) {
-    studioLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (!currentUser) {
-            alert('Для доступа к студии необходимо войти в систему');
-            return;
-        }
-        window.location.href = 'studio.html';
-    });
-}
-
-// Переход на главную
-if (homeLink) {
-    homeLink.addEventListener('click', function(e) {
+// Навигация
+if (studioLink) studioLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (!currentUser) return alert('Для доступа к студии необходимо войти в систему');
+    window.location.href = 'studio.html';
+});
+if (homeLink) homeLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.href = 'index.html';
+});
+document.querySelectorAll('#home-from-studio-link').forEach(link => {
+    link.addEventListener('click', e => {
         e.preventDefault();
         window.location.href = 'index.html';
     });
-}
+});
 
-// Открытие модального окна загрузки видео (общая функция)
+// Открытие окна загрузки
 function openUploadModal() {
-    if (!currentUser) {
-        alert('Для загрузки видео необходимо войти в систему');
-        return;
-    }
-    
-    if (uploadModal) {
-        uploadModal.style.display = 'flex';
-        // Сброс формы
-        if (videoTitleInput) videoTitleInput.value = '';
-        if (videoDescInput) videoDescInput.value = '';
-        if (previewImg) {
-            previewImg.src = '';
-            previewImg.style.display = 'none';
-        }
-        if (thumbnailPreview) {
-            thumbnailPreview.querySelector('i').style.display = 'block';
-            thumbnailPreview.querySelector('p').style.display = 'block';
-        }
-        if (progressContainer) progressContainer.style.display = 'none';
-        if (uploadStatus) uploadStatus.style.display = 'none';
-        if (startUpload) startUpload.disabled = false;
-        if (cancelUpload) cancelUpload.disabled = false;
-        if (progressBar) progressBar.style.width = '0%';
-    }
+    if (!currentUser) return alert('Для загрузки видео необходимо войти в систему');
+    uploadModal.style.display = 'flex';
+    // Сброс формы
+    videoTitleInput.value = '';
+    videoDescInput.value = '';
+    previewImg.src = '';
+    previewImg.style.display = 'none';
+    thumbnailFile = null;
+    thumbnailPreview.querySelector('i').style.display = 'block';
+    thumbnailPreview.querySelector('p').style.display = 'block';
+    progressContainer.style.display = 'none';
+    uploadStatus.style.display = 'none';
+    startUpload.disabled = false;
+    cancelUpload.disabled = false;
+    progressBar.style.width = '0%';
 }
 
-// Загрузка видео - открытие модального окна (для кнопки на studio.html)
-if (uploadBtn) {
-    uploadBtn.addEventListener('click', openUploadModal);
-}
-
-
-// Закрытие модального окна загрузки
-if (closeUpload) {
-    closeUpload.addEventListener('click', function() {
-        uploadModal.style.display = 'none';
-    });
-}
-
-if (cancelUpload) {
-    cancelUpload.addEventListener('click', function() {
-        uploadModal.style.display = 'none';
-    });
-}
+if (uploadBtn) uploadBtn.addEventListener('click', openUploadModal);
 
 // Загрузка превью
-if (thumbnailPreview) {
-    thumbnailPreview.addEventListener('click', function() {
-        const randomImage = 'https://source.unsplash.com/random/600x400/?video,film';
-        if (previewImg) {
-            previewImg.src = randomImage;
-            previewImg.style.display = 'block';
+if (thumbnailPreview) thumbnailPreview.addEventListener('click', () => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.onchange = e => {
+        const file = e.target.files[0];
+        if (file) {
+            thumbnailFile = file; // Сохраняем файл
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                previewImg.src = event.target.result;
+                previewImg.style.display = 'block';
+                thumbnailPreview.querySelector('i').style.display = 'none';
+                thumbnailPreview.querySelector('p').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
         }
-        if (thumbnailPreview) {
-            thumbnailPreview.querySelector('i').style.display = 'none';
-            thumbnailPreview.querySelector('p').style.display = 'none';
-        }
-    });
-}
+    };
+    fileInput.click();
+});
 
-// Начало загрузки видео
-if (startUpload) {
-    startUpload.addEventListener('click', function() {
-        const title = videoTitleInput.value.trim();
-        const description = videoDescInput.value.trim();
-        
-        if (!title) {
-            alert('Введите название видео');
-            return;
-        }
-        
-        if (!previewImg || !previewImg.src || previewImg.style.display === 'none') { // Проверка, что превью загружено
-            alert('Загрузите превью для видео');
-            return;
-        }
-        
-        // Показать индикатор загрузки
-        if (progressContainer) progressContainer.style.display = 'block';
-        if (uploadStatus) uploadStatus.style.display = 'block';
-        if (startUpload) startUpload.disabled = true;
-        if (cancelUpload) cancelUpload.disabled = true;
-        
-        // Имитация процесса загрузки
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += Math.floor(Math.random() * 10);
-            if (progress >= 100) {
-                progress = 100;
-                clearInterval(interval);
-                
-                // Создание нового видео
-                const newVideo = {
-                    title: title,
-                    channel: currentUser.name,
-                    views: "0",
-                    date: "Только что",
-                    duration: "0:00",
-                    thumbnail: previewImg.src,
-                    description: description,
-                    status: "Обработка"
-                };
-                
-                studioVideos.unshift(newVideo);
-                localStorage.setItem('chebtube_studio_videos', JSON.stringify(studioVideos));
-                
-                // Обновление UI
-                generateStudioVideos();
-                
-                // Закрытие модального окна
-                setTimeout(() => {
-                    uploadModal.style.display = 'none';
-                    if (startUpload) startUpload.disabled = false;
-                    if (cancelUpload) cancelUpload.disabled = false;
-                    alert('Видео успешно загружено! Оно появится на платформе после обработки.');
-                }, 500);
-            }
-            
-            if (progressBar) progressBar.style.width = `${progress}%`;
-            if (uploadStatus) uploadStatus.textContent = `Загрузка: ${progress}%`;
-        }, 200);
-    });
-}
+// Отправка видео на сервер
+if (startUpload) startUpload.addEventListener('click', async () => {
+    const title = videoTitleInput.value.trim();
+    const description = videoDescInput.value.trim();
+    
+    if (!title || !thumbnailFile) return alert('Введите название и загрузите превью');
+    if (!currentUser) return alert('Ошибка: вы не авторизованы.');
+    
+    progressContainer.style.display = 'block';
+    uploadStatus.style.display = 'block';
+    startUpload.disabled = true;
+    cancelUpload.disabled = true;
+    progressBar.style.width = '50%';
+    uploadStatus.textContent = `Загрузка на сервер...`;
 
-// Поиск видео
-function performSearch() {
-    const currentSearchInput = document.activeElement === searchInput ? searchInput : document.getElementById('search-input-studio');
-    const query = currentSearchInput ? currentSearchInput.value.trim() : '';
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('thumbnail', thumbnailFile);
+    formData.append('channel', currentUser.name);
+    
+    try {
+        const response = await fetch(`${SERVER_URL}/api/upload`, { method: 'POST', body: formData });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message);
 
-    if (query) {
-        alert(`Поиск по запросу: "${query}"\nВ реальном приложении здесь бы отобразились результаты поиска`);
-        if (currentSearchInput) currentSearchInput.value = '';
+        progressBar.style.width = '100%';
+        uploadStatus.textContent = 'Загрузка завершена!';
+        
+        videoData.unshift(result.video); // Мгновенно обновляем локальные данные
+        const myVideos = videoData.filter(v => v.channel === currentUser.name);
+        generateStudioVideos(myVideos); // Перерисовываем студию
+        
+        setTimeout(() => {
+            uploadModal.style.display = 'none';
+            alert('Видео успешно загружено!');
+        }, 500);
+
+    } catch (error) {
+        alert(`Ошибка загрузки: ${error.message}`);
+    } finally {
+        startUpload.disabled = false;
+        cancelUpload.disabled = false;
     }
-}
-// Добавляем слушатели событий поиска для обеих страниц
-if (searchBtn) {
-    searchBtn.addEventListener('click', performSearch);
-}
-if (searchInput) {
-    searchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') performSearch();
-    });
-}
-const searchBtnStudio = document.getElementById('search-btn-studio');
-const searchInputStudio = document.getElementById('search-input-studio');
-if (searchBtnStudio) {
-    searchBtnStudio.addEventListener('click', performSearch);
-}
-if (searchInputStudio) {
-    searchInputStudio.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') performSearch();
-    });
-}
+});
 
 
-// Начать просмотр
-if (startWatching) {
-    startWatching.addEventListener('click', function() {
-        const firstVideo = document.querySelector('.video-card');
-        if (firstVideo) {
-            firstVideo.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
-}
-
-// Навигация в сайдбаре
-const sidebarItems = document.querySelectorAll('.sidebar-item');
-sidebarItems.forEach(item => {
-    item.addEventListener('click', function() {
-        sidebarItems.forEach(i => i.classList.remove('active'));
-        this.classList.add('active');
+// Перенаправление на главную для входа/регистрации со страницы студии
+document.querySelectorAll('#login-btn-studio, #register-btn-studio').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const action = btn.id.includes('login') ? 'login' : 'register';
+        window.location.href = `index.html?action=${action}`;
     });
 });
