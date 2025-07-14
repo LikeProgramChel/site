@@ -314,12 +314,11 @@ header {
 
 /* Студия */
 .studio-container {
-    /* display: none; */ /* Управляется JS */
     top: var(--header-height);
     left: 0;
     width: 100%;
     height: calc(100vh - var(--header-height));
-    position: fixed;
+    position: relative;
 }
 
 .studio-sidebar {
@@ -332,16 +331,14 @@ header {
     padding: 20px 0;
     overflow-y: auto;
     z-index: 99;
-    /* display: none; */ /* Управляется JS */
 }
 
 .studio-main {
     margin-top: 0;
     margin-left: var(--studio-sidebar);
     padding: 30px;
-    /* display: none; */ /* Управляется JS */
     width: calc(100% - var(--studio-sidebar));
-    height: 100%;
+    height: calc(100vh - var(--header-height));
     overflow-y: auto;
 }
 
@@ -392,6 +389,8 @@ header {
     overflow: hidden;
     transition: all 0.3s;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
 }
 
 .studio-card:hover {
@@ -405,6 +404,7 @@ header {
     padding-top: 56.25%;
     background: #333;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .studio-thumb img {
@@ -418,6 +418,9 @@ header {
 
 .studio-card-info {
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }
 
 .studio-card-title {
@@ -431,7 +434,7 @@ header {
     justify-content: space-between;
     color: var(--text-secondary);
     font-size: 14px;
-    margin-top: 15px;
+    margin-top: auto; /* Прижимает блок к низу */
 }
 
 .stat-item {
@@ -572,8 +575,13 @@ header {
     transition: all 0.3s;
     margin-top: 10px;
 }
+.auth-btn:disabled {
+    background: #555;
+    cursor: not-allowed;
+}
 
-.auth-btn:hover {
+
+.auth-btn:hover:not(:disabled) {
     background: var(--primary-dark);
 }
 
@@ -612,7 +620,7 @@ header {
     border-radius: 15px;
     overflow: hidden;
     box-shadow: 0 15px 40px rgba(0,0,0,0.5);
-    position: relative; /* Чтобы close-auth позиционировался относительно этой формы */
+    position: relative;
 }
 
 .upload-header {
@@ -650,6 +658,8 @@ header {
     margin-bottom: 25px;
     cursor: pointer;
     transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
 }
 
 .upload-preview:hover {
@@ -669,10 +679,11 @@ header {
 }
 
 .upload-preview img {
-    max-width: 100%;
-    max-height: 100%;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     display: none;
-    object-fit: contain; /* Чтобы изображение помещалось полностью */
 }
 
 .progress-container {
@@ -715,8 +726,12 @@ header {
     cursor: pointer;
     transition: background 0.3s;
 }
+.cancel-btn:disabled {
+     background: #222;
+     cursor: not-allowed;
+}
 
-.cancel-btn:hover {
+.cancel-btn:hover:not(:disabled) {
     background: #555;
 }
 
@@ -859,104 +874,48 @@ header {
 }
 
 @media (max-width: 992px) {
-    .sidebar {
+    .sidebar, .studio-sidebar {
         width: 70px;
     }
-    .sidebar-item span {
+    .sidebar-item span, .studio-sidebar .sidebar-item span {
         display: none;
     }
-    .sidebar-item i {
+    .sidebar-item i, .studio-sidebar .sidebar-item i {
         margin-right: 0;
         font-size: 20px;
     }
     .sidebar-divider, .sidebar h3 {
         display: none;
     }
-    .main-content {
+    .main-content, .studio-main {
         margin-left: 70px;
+        width: calc(100% - 70px);
     }
     .studio-link span {
         display: none;
     }
-    .studio-main {
-        margin-left: 70px; /* Для студии тоже, если сайдбар сворачивается */
-        width: calc(100% - 70px);
-    }
-    .studio-sidebar {
-        width: 70px;
-    }
-    .studio-sidebar .sidebar-item span {
-        display: none;
-    }
-    .studio-sidebar .sidebar-item i {
-        margin-right: 0;
-        font-size: 20px;
-    }
 }
 
 @media (max-width: 768px) {
-    .banner {
-        height: 250px;
-        padding: 30px;
-    }
-    .banner h1 {
-        font-size: 32px;
-    }
-    .banner p {
-        font-size: 16px;
-    }
+    .banner { height: 250px; padding: 30px; }
+    .banner h1 { font-size: 32px; }
+    .banner p { font-size: 16px; }
     .videos-grid, .studio-grid {
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     }
-    .search-container {
-        max-width: 300px;
-    }
-    .logo .studio {
-        display: none;
-    }
+    .search-container { max-width: 300px; }
+    .logo .studio { display: none; }
 }
 
 @media (max-width: 576px) {
-    .sidebar {
-        display: none;
-    }
-    .main-content {
-        margin-left: 0;
-    }
-    .studio-container {
-        position: static; /* Отключаем fixed, чтобы скроллилось как обычный контент */
-        height: auto;
-    }
-    .studio-sidebar {
-        display: none !important; /* Полностью скрываем сайдбар студии на мобильных */
-    }
-    .studio-main {
-        margin-left: 0;
-        width: 100%;
-        padding: 20px; /* Уменьшаем паддинг */
-    }
-    .logo span.text {
-        display: none;
-    }
-    .search-container {
-        max-width: 180px;
-    }
-    .banner {
-        height: 200px;
-        padding: 20px;
-    }
-    .banner h1 {
-        font-size: 24px;
-    }
-    .videos-grid, .studio-grid {
-        grid-template-columns: 1fr;
-    }
-    .studio-link {
-        padding: 8px;
-        border-radius: 50%;
-        margin-left: 10px;
-    }
-    .studio-link i {
-        margin-right: 0;
-    }
+    .sidebar, .studio-sidebar { display: none; }
+    .main-content, .studio-main { margin-left: 0; width: 100%; padding: 20px; }
+    .studio-container { position: static; height: auto; }
+    .logo span.text { display: none; }
+    .search-container { max-width: 180px; }
+    .banner { height: auto; padding: 20px; }
+    .banner h1 { font-size: 24px; }
+    .videos-grid, .studio-grid { grid-template-columns: 1fr; }
+    .studio-link { padding: 8px; border-radius: 50%; margin-left: 10px; }
+    .studio-link i { margin-right: 0; }
 }
