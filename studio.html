@@ -15,7 +15,7 @@
             <span class="studio">STUDIO</span>
         </a>
         <div class="search-container">
-            <input type="text" placeholder="Поиск видео..." id="search-input-studio">
+            <input type="text" placeholder="Поиск в студии..." id="search-input-studio">
             <button id="search-btn-studio"><i class="fas fa-search"></i></button>
         </div>
         <div class="user-actions">
@@ -49,12 +49,12 @@
     <div class="studio-container" id="studio-container" style="display: flex;">
         <nav class="studio-sidebar" id="studio-sidebar" style="display: block;">
             <div class="sidebar-item active">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>Панель управления</span>
-            </div>
-            <div class="sidebar-item">
                 <i class="fas fa-film"></i>
                 <span>Видео</span>
+            </div>
+            <div class="sidebar-item">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Панель управления</span>
             </div>
             <div class="sidebar-item">
                 <i class="fas fa-chart-line"></i>
@@ -68,16 +68,9 @@
                 <i class="fas fa-cog"></i>
                 <span>Настройки</span>
             </div>
-            
-            <div class="sidebar-divider"></div>
-            
-            <div class="sidebar-item">
-                <i class="fas fa-play-circle"></i>
-                <span>CHEBTUBE STUDIO</span>
-            </div>
         </nav>
 
-        <div class="studio-main" id="studio-main" style="display: block;">
+        <main class="studio-main" id="studio-main" style="display: block;">
             <div class="studio-header">
                 <h1><i class="fas fa-video"></i> Мои видео</h1>
                 <button class="upload-btn" id="upload-btn">
@@ -87,12 +80,14 @@
             </div>
             
             <div class="studio-grid" id="studio-grid">
-                </div>
-        </div>
+                <!-- Видео будут сгенерированы здесь с помощью scripts.js -->
+            </div>
+        </main>
     </div>
 
+    <!-- Модальное окно загрузки, оно общее -->
     <div class="upload-modal" id="upload-modal">
-        <div class="close-auth" id="close-upload">&times;</div>
+        <div class="close-auth" id="close-upload">×</div>
         <div class="upload-form">
             <div class="upload-header">
                 <h2><i class="fas fa-cloud-upload-alt"></i> Загрузка видео</h2>
@@ -100,7 +95,7 @@
             <div class="upload-body">
                 <div class="upload-preview" id="thumbnail-preview">
                     <i class="fas fa-image"></i>
-                    <p>Перетащите превью или нажмите для загрузки</p>
+                    <p>Нажмите для выбора превью</p>
                     <img id="preview-img" src="" alt="Превью">
                 </div>
                 
@@ -128,99 +123,5 @@
     </div>
     
     <script src="scripts.js"></script>
-    <script>
-        // Дополнительные скрипты для страницы студии, если нужно
-        document.addEventListener('DOMContentLoaded', () => {
-            // Инициализация UI для студии (например, обновление аватара)
-            updateUserUIForStudio();
-            generateStudioVideos(); // Перезагружаем видео студии
-        });
-
-        // Переход на главную со страницы студии
-        document.getElementById('home-from-studio-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            window.location.href = 'index.html'; // Просто перенаправляем на index.html
-        });
-
-        // Открытие модального окна загрузки видео (если оно в studio.html)
-        document.getElementById('upload-btn').addEventListener('click', function() {
-            if (!currentUser) {
-                alert('Для загрузки видео необходимо войти в систему');
-                return;
-            }
-            document.getElementById('upload-modal').style.display = 'flex';
-        });
-
-        // Обновление UI для студии (повторяющийся код или общая функция)
-        function updateUserUIForStudio() {
-            const userAvatarStudio = document.getElementById('user-avatar-studio');
-            const loginBtnStudio = document.getElementById('login-btn-studio');
-            const registerBtnStudio = document.getElementById('register-btn-studio');
-            const logoutBtnStudio = document.getElementById('logout-btn-studio');
-            const myChannelBtnStudio = document.getElementById('my-channel-btn-studio');
-
-            if (currentUser) {
-                userAvatarStudio.textContent = currentUser.name.charAt(0);
-                loginBtnStudio.style.display = 'none';
-                registerBtnStudio.style.display = 'none';
-                logoutBtnStudio.style.display = 'block';
-                myChannelBtnStudio.style.display = 'block';
-            } else {
-                userAvatarStudio.textContent = '?';
-                loginBtnStudio.style.display = 'block';
-                registerBtnStudio.style.display = 'block';
-                logoutBtnStudio.style.display = 'none';
-                myChannelBtnStudio.style.display = 'none';
-            }
-        }
-
-        // Показать/скрыть меню пользователя для студии
-        document.getElementById('user-avatar-studio').addEventListener('click', function(e) {
-            e.stopPropagation();
-            document.getElementById('user-menu-studio').classList.toggle('active');
-        });
-
-        document.addEventListener('click', function(e) {
-            const userMenuStudio = document.getElementById('user-menu-studio');
-            const userAvatarStudio = document.getElementById('user-avatar-studio');
-            if (!userMenuStudio.contains(e.target) && e.target !== userAvatarStudio) {
-                userMenuStudio.classList.remove('active');
-            }
-        });
-
-        // Обработчики входа/регистрации/выхода для студии
-        document.getElementById('login-btn-studio').addEventListener('click', function() {
-            window.location.href = 'index.html?action=login'; // Перенаправляем на главную с параметром
-        });
-        document.getElementById('register-btn-studio').addEventListener('click', function() {
-            window.location.href = 'index.html?action=register'; // Перенаправляем на главную с параметром
-        });
-        document.getElementById('logout-btn-studio').addEventListener('click', function() {
-            currentUser = null;
-            localStorage.removeItem('chebtube_current_user');
-            updateUserUIForStudio();
-            alert('Вы вышли из системы');
-            document.getElementById('user-menu-studio').classList.remove('active');
-            window.location.href = 'index.html'; // Вернуться на главную
-        });
-
-        // Поиск на странице студии (может быть отдельная логика или общая)
-        document.getElementById('search-btn-studio').addEventListener('click', function() {
-            const query = document.getElementById('search-input-studio').value.trim();
-            if (query) {
-                alert(`Поиск в студии по запросу: "${query}"`);
-                document.getElementById('search-input-studio').value = '';
-            }
-        });
-
-        // Навигация в сайдбаре студии
-        const studioSidebarItems = document.querySelectorAll('.studio-sidebar .sidebar-item');
-        studioSidebarItems.forEach(item => {
-            item.addEventListener('click', function() {
-                studioSidebarItems.forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-    </script>
 </body>
 </html>
