@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр видео - CHEBTUBE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .watch-container { padding: 20px; max-width: 1280px; margin: 80px auto 20px; }
+        .video-player-wrapper { position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 12px; overflow: hidden; }
+        .video-player-wrapper video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .video-details { margin-top: 20px; }
+        .video-title-watch { font-size: 24px; margin-bottom: 10px; }
+        .video-channel-watch { display: flex; align-items: center; color: var(--text-secondary); margin-bottom: 15px; }
+        .video-description { background: var(--card-bg); padding: 15px; border-radius: 8px; white-space: pre-wrap; margin-top: 15px; }
+    </style>
+</head>
+<body class="index-page">
+    <header>
+        <a href="/" class="logo" id="home-link"><i class="fas fa-play-circle"></i><span class="text">CHEBTUBE</span><span class="studio">STUDIO</span></a>
+        <div class="search-container"><input type="text" placeholder="Поиск видео..." id="search-input"><button id="search-btn"><i class="fas fa-search"></i></button></div>
+        <div class="user-actions">
+            <button class="studio-link" id="studio-link"><i class="fas fa-film"></i><span>Студия</span></button>
+            <i class="fas fa-bell"></i>
+            <div class="user-avatar" id="user-avatar">?</div>
+            <div class="user-menu" id="user-menu">
+                <div class="user-menu-item" id="login-btn"><i class="fas fa-sign-in-alt"></i><span>Войти</span></div>
+                <div class="user-menu-item" id="register-btn"><i class="fas fa-user-plus"></i><span>Регистрация</span></div>
+                <div class="user-menu-item" id="logout-btn" style="display: none;"><i class="fas fa-sign-out-alt"></i><span>Выйти</span></div>
+                <div class="user-menu-item" id="my-channel-btn" style="display: none;"><i class="fas fa-user"></i><span>Мой канал</span></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="watch-container">
+        <div class="video-player-wrapper">
+            <video id="video-player" controls autoplay playsinline></video>
+        </div>
+        <div class="video-details">
+            <h1 id="video-title" class="video-title-watch">Загрузка...</h1>
+            <div id="video-channel" class="video-channel-watch"></div>
+            <p id="video-description" class="video-description"></p>
+        </div>
+    </main>
+    
+    <script src="/scripts.js"></script>
+    <script src="/watch.js"></script>
+</body>
+</html>
