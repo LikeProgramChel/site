@@ -1,11 +1,18 @@
+// ==========================================================
+// ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+// ==========================================================
 let videoData = [];
 let currentUser = null;
 let users = [];
-
-// Переменная для файла превью
 let thumbnailFile = null;
+let videoFile = null;
 
-// DOM элементы
+const SERVER_URL = ''; // Запросы идут на тот же домен, поэтому оставляем пустым
+
+// ==========================================================
+// КЭШИРОВАНИЕ DOM-ЭЛЕМЕНТОВ
+// ==========================================================
+// Общие элементы
 const userAvatar = document.getElementById('user-avatar');
 const userMenu = document.getElementById('user-menu');
 const loginBtn = document.getElementById('login-btn');
@@ -20,9 +27,17 @@ const loginForm = document.getElementById('login-form');
 const registerForm = document.getElementById('register-form');
 const studioLink = document.getElementById('studio-link');
 const homeLink = document.getElementById('home-link');
-const searchBtn = document.getElementById('search-btn');
-const searchInput = document.getElementById('search-input');
-const startWatching = document.getElementById('start-watching');
+
+// Элементы студии (могут быть null на главной странице)
+const userAvatarStudio = document.getElementById('user-avatar-studio');
+const userMenuStudio = document.getElementById('user-menu-studio');
+const loginBtnStudio = document.getElementById('login-btn-studio');
+const registerBtnStudio = document.getElementById('register-btn-studio');
+const logoutBtnStudio = document.getElementById('logout-btn-studio');
+const myChannelBtnStudio = document.getElementById('my-channel-btn-studio');
+const homeFromStudioLink = document.getElementById('home-from-studio-link');
+const studioGrid = document.getElementById('studio-grid');
+const uploadBtn = document.getElementById('upload-btn');
 
 // Элементы модального окна загрузки
 const uploadModal = document.getElementById('upload-modal');
@@ -31,40 +46,33 @@ const cancelUpload = document.getElementById('cancel-upload');
 const startUpload = document.getElementById('start-upload');
 const thumbnailPreview = document.getElementById('thumbnail-preview');
 const previewImg = document.getElementById('preview-img');
+const videoFileInput = document.getElementById('video-file-input');
+const videoTitleInput = document.getElementById('video-title');
+const videoDescInput = document.getElementById('video-desc');
 const progressContainer = document.getElementById('progress-container');
 const progressBar = document.getElementById('progress-bar');
 const uploadStatus = document.getElementById('upload-status');
-const videoTitleInput = document.getElementById('video-title');
-const videoDescInput = document.getElementById('video-desc');
 
-// Элементы index.html
+// Элементы главной страницы
 const featuredVideosContainer = document.getElementById('featured-videos');
 const trendingVideosContainer = document.getElementById('trending-videos');
+const startWatchingBtn = document.getElementById('start-watching');
 
-// Элементы studio.html
-const uploadBtn = document.getElementById('upload-btn');
-const studioGrid = document.getElementById('studio-grid');
 
-// АДРЕС СЕРВЕРА
-const SERVER_URL = 'https://impuls21.ru'; 
+// ==========================================================
+// ОСНОВНЫЕ ФУНКЦИИ И ИНИЦИАЛИЗАЦИЯ
+// ==========================================================
 
-// Загрузка данных при старте
 document.addEventListener('DOMContentLoaded', async () => {
     await loadDataFromServer();
-    updateUserUI(); // Обновляем UI после загрузки данных и определения пользователя
+    updateUserUI(); 
 
-    // Определяем страницу и генерируем контент
     if (document.body.classList.contains('index-page')) {
         generateVideoCards(featuredVideosContainer, 12, videoData);
         generateVideoCards(trendingVideosContainer, 6, videoData);
-        handleUrlActions();
     } else if (document.body.classList.contains('studio-page')) {
-        if (currentUser) {
-            const myVideos = videoData.filter(v => v.channel === currentUser.name);
-            generateStudioVideos(myVideos);
-        } else {
-            generateStudioVideos([]); // Показать заглушку если не вошел
-        }
+        const myVideos = currentUser ? videoData.filter(v => v.channel === currentUser.name) : [];
+        generateStudioVideos(myVideos);
     }
 });
 
@@ -74,50 +82,35 @@ async function loadDataFromServer() {
             fetch(`${SERVER_URL}/api/videos`),
             fetch(`${SERVER_URL}/api/users`)
         ]);
-
         if (!videoResponse.ok || !userResponse.ok) {
             throw new Error('Ошибка сети при загрузке данных');
         }
-
+        
         videoData = await videoResponse.json();
         users = await userResponse.json();
-
-        // Проверка авторизации из localStorage
+        
         const savedUser = localStorage.getItem('chebtube_current_user');
         if (savedUser) {
             currentUser = JSON.parse(savedUser);
         }
+
     } catch (error) {
-        console.error('Ошибка загрузки данных с сервера:', error);
-        videoData = [];
-        users = [];
+        console.error('Ошибка загрузки данных:', error);
     }
 }
 
-function handleUrlActions() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const action = urlParams.get('action');
-    if (action === 'login' && loginBtn) {
-        loginBtn.click();
-    } else if (action === 'register' && registerBtn) {
-        registerBtn.click();
-    }
-    // Очистить параметры из URL, чтобы они не мешали при перезагрузке
-    if (action) {
-       window.history.replaceState({}, document.title, window.location.pathname);
-    }
-}
-
-// Генерация карточек видео на главной
 function generateVideoCards(container, count, data) {
     if (!container) return;
     container.innerHTML = '';
     const shuffled = [...data].sort(() => 0.5 - Math.random());
     for (let i = 0; i < count && i < shuffled.length; i++) {
         const video = shuffled[i];
-        const card = document.createElement('div');
-        card.className = 'video-card';
-        card.innerHTML = `
+        const cardLink = document.createElement('a');
+        cardLink.className = 'video-card';
+        cardLink.href = `/videos/${video.id}`;
+        cardLink.style.textDecoration = 'none';
+        cardLink.style.color = 'inherit';
+        cardLink.innerHTML = `
             <div class="thumbnail">
                 <img src="${SERVER_URL}${video.thumbnail}" alt="${video.title}">
                 <div class="duration">${video.duration}</div>
@@ -130,15 +123,14 @@ function generateVideoCards(container, count, data) {
                 </div>
                 <div class="video-stats">
                     <span>${video.views} просмотров</span>
+                    <span> • </span>
                     <span>${video.date}</span>
                 </div>
-            </div>
-        `;
-        container.appendChild(card);
+            </div>`;
+        container.appendChild(cardLink);
     }
 }
 
-// Генерация видео в студии
 function generateStudioVideos(videos) {
     if (!studioGrid) return;
     studioGrid.innerHTML = '';
@@ -154,11 +146,7 @@ function generateStudioVideos(videos) {
                 <i class="fas fa-video" style="font-size: 80px; color: #555; margin-bottom: 20px;"></i>
                 <h3>У вас пока нет загруженных видео</h3>
                 <p>Нажмите кнопку "Загрузить видео", чтобы добавить свое первое видео</p>
-                <button class="upload-btn" style="margin-top: 20px;" onclick="document.getElementById('upload-btn').click();">
-                    <i class="fas fa-upload"></i> Загрузить видео
-                </button>
-            </div>
-        `;
+            </div>`;
         return;
     }
     
@@ -166,9 +154,11 @@ function generateStudioVideos(videos) {
         const card = document.createElement('div');
         card.className = 'studio-card';
         card.innerHTML = `
-            <div class="studio-thumb">
-                <img src="${SERVER_URL}${video.thumbnail}" alt="${video.title}">
-            </div>
+            <a href="/videos/${video.id}" style="text-decoration: none; color: inherit;">
+                <div class="studio-thumb">
+                    <img src="${SERVER_URL}${video.thumbnail}" alt="${video.title}">
+                </div>
+            </a>
             <div class="studio-card-info">
                 <h3 class="studio-card-title">${video.title}</h3>
                 <p style="color: #aaa; font-size: 14px; margin: 10px 0;">${video.description || 'Без описания'}</p>
@@ -176,41 +166,42 @@ function generateStudioVideos(videos) {
                     <div class="stat-item"><i class="fas fa-eye"></i> ${video.views} просмотров</div>
                     <div class="stat-item"><i class="fas fa-clock"></i> ${video.date} <span class="badge">${video.status}</span></div>
                 </div>
-            </div>
-        `;
+            </div>`;
         studioGrid.appendChild(card);
     });
 }
 
-// Обновление UI пользователя
 function updateUserUI() {
     const isStudio = document.body.classList.contains('studio-page');
-    const avatarEl = document.getElementById(isStudio ? 'user-avatar-studio' : 'user-avatar');
-    const menuEl = document.getElementById(isStudio ? 'user-menu-studio' : 'user-menu');
+    const avatar = isStudio ? userAvatarStudio : userAvatar;
+    const menu = isStudio ? userMenuStudio : userMenu;
     
+    if (!avatar || !menu) return; // Элементов нет, выходим
+
     if (currentUser) {
-        avatarEl.textContent = currentUser.name.charAt(0);
-        menuEl.querySelector(isStudio ? '#login-btn-studio' : '#login-btn').style.display = 'none';
-        menuEl.querySelector(isStudio ? '#register-btn-studio' : '#register-btn').style.display = 'none';
-        menuEl.querySelector(isStudio ? '#logout-btn-studio' : '#logout-btn').style.display = 'block';
-        menuEl.querySelector(isStudio ? '#my-channel-btn-studio' : '#my-channel-btn').style.display = 'block';
+        avatar.textContent = currentUser.name.charAt(0).toUpperCase();
+        menu.querySelector(isStudio ? '#login-btn-studio' : '#login-btn').style.display = 'none';
+        menu.querySelector(isStudio ? '#register-btn-studio' : '#register-btn').style.display = 'none';
+        menu.querySelector(isStudio ? '#logout-btn-studio' : '#logout-btn').style.display = 'block';
+        menu.querySelector(isStudio ? '#my-channel-btn-studio' : '#my-channel-btn').style.display = 'block';
     } else {
-        avatarEl.textContent = '?';
-        menuEl.querySelector(isStudio ? '#login-btn-studio' : '#login-btn').style.display = 'block';
-        menuEl.querySelector(isStudio ? '#register-btn-studio' : '#register-btn').style.display = 'block';
-        menuEl.querySelector(isStudio ? '#logout-btn-studio' : '#logout-btn').style.display = 'none';
-        menuEl.querySelector(isStudio ? '#my-channel-btn-studio' : '#my-channel-btn').style.display = 'none';
+        avatar.textContent = '?';
+        menu.querySelector(isStudio ? '#login-btn-studio' : '#login-btn').style.display = 'block';
+        menu.querySelector(isStudio ? '#register-btn-studio' : '#register-btn').style.display = 'block';
+        menu.querySelector(isStudio ? '#logout-btn-studio' : '#logout-btn').style.display = 'none';
+        menu.querySelector(isStudio ? '#my-channel-btn-studio' : '#my-channel-btn').style.display = 'none';
     }
 }
 
-// --- ОБРАБОТЧИКИ СОБЫТИЙ ---
+// ==========================================================
+// ОБРАБОТЧИКИ СОБЫТИЙ
+// ==========================================================
 
-// Открытие/закрытие меню пользователя
+// --- Меню пользователя ---
 document.querySelectorAll('.user-avatar').forEach(avatar => {
-    avatar.addEventListener('click', (e) => {
+    avatar?.addEventListener('click', (e) => {
         e.stopPropagation();
-        const menu = avatar.nextElementSibling;
-        menu.classList.toggle('active');
+        avatar.nextElementSibling?.classList.toggle('active');
     });
 });
 
@@ -222,27 +213,25 @@ document.addEventListener('click', (e) => {
     });
 });
 
-// Открытие форм входа/регистрации
-if (loginBtn) loginBtn.addEventListener('click', () => { authContainer.style.display = 'flex'; loginTab.click(); });
-if (registerBtn) registerBtn.addEventListener('click', () => { authContainer.style.display = 'flex'; registerTab.click(); });
+// --- Модальное окно входа/регистрации ---
+loginBtn?.addEventListener('click', () => { authContainer.style.display = 'flex'; loginTab.click(); });
+registerBtn?.addEventListener('click', () => { authContainer.style.display = 'flex'; registerTab.click(); });
+loginBtnStudio?.addEventListener('click', () => { window.location.href = '/index.html?action=login'; });
+registerBtnStudio?.addEventListener('click', () => { window.location.href = '/index.html?action=register'; });
 
-// Переключение вкладок
-if (loginTab) loginTab.addEventListener('click', () => {
+loginTab?.addEventListener('click', () => {
     loginForm.style.display = 'block'; registerForm.style.display = 'none';
     loginTab.classList.add('active'); registerTab.classList.remove('active');
 });
-if (registerTab) registerTab.addEventListener('click', () => {
+registerTab?.addEventListener('click', () => {
     loginForm.style.display = 'none'; registerForm.style.display = 'block';
     registerTab.classList.add('active'); loginTab.classList.remove('active');
 });
 
-// Закрытие модальных окон
-if (closeAuth) closeAuth.addEventListener('click', () => { authContainer.style.display = 'none'; });
-if (closeUpload) closeUpload.addEventListener('click', () => { uploadModal.style.display = 'none'; });
-if (cancelUpload) cancelUpload.addEventListener('click', () => { uploadModal.style.display = 'none'; });
+closeAuth?.addEventListener('click', () => { authContainer.style.display = 'none'; });
 
-// Обработка форм
-if (loginForm) loginForm.addEventListener('submit', async (e) => {
+// --- Формы ---
+loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
@@ -259,13 +248,13 @@ if (loginForm) loginForm.addEventListener('submit', async (e) => {
         updateUserUI();
         authContainer.style.display = 'none';
         alert(`Добро пожаловать, ${currentUser.name}!`);
-        window.location.reload(); // Перезагружаем для обновления контента
+        window.location.reload();
     } catch (error) {
         alert(`Ошибка входа: ${error.message}`);
     }
 });
 
-if (registerForm) registerForm.addEventListener('submit', async (e) => {
+registerForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = document.getElementById('register-name').value;
     const email = document.getElementById('register-email').value;
@@ -286,54 +275,52 @@ if (registerForm) registerForm.addEventListener('submit', async (e) => {
         updateUserUI();
         authContainer.style.display = 'none';
         alert(`Регистрация прошла успешно, ${currentUser.name}!`);
-        window.location.reload(); // Перезагружаем
+        window.location.reload();
     } catch (error) {
         alert(`Ошибка регистрации: ${error.message}`);
     }
 });
 
-// Выход
-document.querySelectorAll('#logout-btn, #logout-btn-studio').forEach(btn => {
-    btn.addEventListener('click', () => {
-        currentUser = null;
-        localStorage.removeItem('chebtube_current_user');
-        updateUserUI();
-        alert('Вы вышли из системы');
-        if (document.body.classList.contains('studio-page')) {
-            window.location.href = 'index.html';
-        } else {
-             window.location.reload();
-        }
-    });
-});
+// --- Выход ---
+function handleLogout() {
+    currentUser = null;
+    localStorage.removeItem('chebtube_current_user');
+    updateUserUI();
+    alert('Вы вышли из системы');
+    if (document.body.classList.contains('studio-page')) {
+        window.location.href = '/index.html';
+    } else {
+         window.location.reload();
+    }
+}
+logoutBtn?.addEventListener('click', handleLogout);
+logoutBtnStudio?.addEventListener('click', handleLogout);
 
-// Навигация
-if (studioLink) studioLink.addEventListener('click', (e) => {
+// --- Навигация ---
+studioLink?.addEventListener('click', (e) => {
     e.preventDefault();
     if (!currentUser) return alert('Для доступа к студии необходимо войти в систему');
-    window.location.href = 'studio.html';
+    window.location.href = '/studio.html';
 });
-if (homeLink) homeLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    window.location.href = 'index.html';
-});
-document.querySelectorAll('#home-from-studio-link').forEach(link => {
-    link.addEventListener('click', e => {
-        e.preventDefault();
-        window.location.href = 'index.html';
-    });
-});
+homeLink?.addEventListener('click', (e) => { e.preventDefault(); window.location.href = '/'; });
+homeFromStudioLink?.addEventListener('click', (e) => { e.preventDefault(); window.location.href = '/'; });
+startWatchingBtn?.addEventListener('click', () => { document.querySelector('.videos-grid')?.scrollIntoView({ behavior: 'smooth' }); });
 
-// Открытие окна загрузки
+// --- Логика загрузки ---
 function openUploadModal() {
-    if (!currentUser) return alert('Для загрузки видео необходимо войти в систему');
+    if (!currentUser) {
+        alert('Для загрузки видео необходимо войти в систему');
+        return;
+    }
     uploadModal.style.display = 'flex';
     // Сброс формы
     videoTitleInput.value = '';
     videoDescInput.value = '';
+    videoFileInput.value = '';
     previewImg.src = '';
     previewImg.style.display = 'none';
     thumbnailFile = null;
+    videoFile = null;
     thumbnailPreview.querySelector('i').style.display = 'block';
     thumbnailPreview.querySelector('p').style.display = 'block';
     progressContainer.style.display = 'none';
@@ -343,19 +330,20 @@ function openUploadModal() {
     progressBar.style.width = '0%';
 }
 
-if (uploadBtn) uploadBtn.addEventListener('click', openUploadModal);
+uploadBtn?.addEventListener('click', openUploadModal);
+closeUpload?.addEventListener('click', () => { uploadModal.style.display = 'none'; });
+cancelUpload?.addEventListener('click', () => { uploadModal.style.display = 'none'; });
 
-// Загрузка превью
-if (thumbnailPreview) thumbnailPreview.addEventListener('click', () => {
+thumbnailPreview?.addEventListener('click', () => {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = 'image/*';
     fileInput.onchange = e => {
         const file = e.target.files[0];
         if (file) {
-            thumbnailFile = file; // Сохраняем файл
+            thumbnailFile = file;
             const reader = new FileReader();
-            reader.onload = (event) => {
+            reader.onload = event => {
                 previewImg.src = event.target.result;
                 previewImg.style.display = 'block';
                 thumbnailPreview.querySelector('i').style.display = 'none';
@@ -367,57 +355,55 @@ if (thumbnailPreview) thumbnailPreview.addEventListener('click', () => {
     fileInput.click();
 });
 
-// Отправка видео на сервер
-if (startUpload) startUpload.addEventListener('click', async () => {
+videoFileInput?.addEventListener('change', (e) => {
+    videoFile = e.target.files[0];
+    if (videoFile) {
+        videoFileInput.style.outline = '2px solid var(--success)';
+    }
+});
+
+startUpload?.addEventListener('click', async () => {
     const title = videoTitleInput.value.trim();
-    const description = videoDescInput.value.trim();
-    
-    if (!title || !thumbnailFile) return alert('Введите название и загрузите превью');
+    if (!title || !thumbnailFile || !videoFile) {
+        return alert('Введите название, выберите превью и видеофайл.');
+    }
     if (!currentUser) return alert('Ошибка: вы не авторизованы.');
     
-    progressContainer.style.display = 'block';
-    uploadStatus.style.display = 'block';
     startUpload.disabled = true;
     cancelUpload.disabled = true;
+    progressContainer.style.display = 'block';
+    uploadStatus.style.display = 'block';
+    uploadStatus.textContent = 'Загрузка...';
     progressBar.style.width = '50%';
-    uploadStatus.textContent = `Загрузка на сервер...`;
 
     const formData = new FormData();
     formData.append('title', title);
-    formData.append('description', description);
-    formData.append('thumbnail', thumbnailFile);
+    formData.append('description', videoDescInput.value.trim());
     formData.append('channel', currentUser.name);
+    formData.append('thumbnail', thumbnailFile);
+    formData.append('videoFile', videoFile);
     
     try {
-        const response = await fetch(`${SERVER_URL}/api/upload`, { method: 'POST', body: formData });
+        const response = await fetch(`${SERVER_URL}/api/upload`, {
+            method: 'POST',
+            body: formData,
+        });
         const result = await response.json();
         if (!response.ok) throw new Error(result.message);
-
+        
         progressBar.style.width = '100%';
         uploadStatus.textContent = 'Загрузка завершена!';
         
-        videoData.unshift(result.video); // Мгновенно обновляем локальные данные
-        const myVideos = videoData.filter(v => v.channel === currentUser.name);
-        generateStudioVideos(myVideos); // Перерисовываем студию
-        
         setTimeout(() => {
-            uploadModal.style.display = 'none';
             alert('Видео успешно загружено!');
+            window.location.reload();
         }, 500);
 
     } catch (error) {
         alert(`Ошибка загрузки: ${error.message}`);
-    } finally {
         startUpload.disabled = false;
         cancelUpload.disabled = false;
+        progressContainer.style.display = 'none';
+        uploadStatus.style.display = 'none';
     }
-});
-
-
-// Перенаправление на главную для входа/регистрации со страницы студии
-document.querySelectorAll('#login-btn-studio, #register-btn-studio').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const action = btn.id.includes('login') ? 'login' : 'register';
-        window.location.href = `index.html?action=${action}`;
-    });
 });
