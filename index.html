@@ -9,7 +9,7 @@
 </head>
 <body class="index-page">
     <header>
-        <a href="#" class="logo" id="home-link">
+        <a href="/" class="logo" id="home-link">
             <i class="fas fa-play-circle"></i>
             <span class="text">CHEBTUBE</span>
             <span class="studio">STUDIO</span>
@@ -26,200 +26,97 @@
             <i class="fas fa-bell"></i>
             <div class="user-avatar" id="user-avatar">?</div>
             <div class="user-menu" id="user-menu">
-                <div class="user-menu-item" id="login-btn">
-                    <i class="fas fa-sign-in-alt"></i>
-                    <span>Войти</span>
-                </div>
-                <div class="user-menu-item" id="register-btn">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Регистрация</span>
-                </div>
-                <div class="user-menu-item" id="logout-btn" style="display: none;">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Выйти</span>
-                </div>
-                <div class="user-menu-item" id="my-channel-btn" style="display: none;">
-                    <i class="fas fa-user"></i>
-                    <span>Мой канал</span>
-                </div>
+                <div class="user-menu-item" id="login-btn"><i class="fas fa-sign-in-alt"></i><span>Войти</span></div>
+                <div class="user-menu-item" id="register-btn"><i class="fas fa-user-plus"></i><span>Регистрация</span></div>
+                <div class="user-menu-item" id="logout-btn" style="display: none;"><i class="fas fa-sign-out-alt"></i><span>Выйти</span></div>
+                <div class="user-menu-item" id="my-channel-btn" style="display: none;"><i class="fas fa-user"></i><span>Мой канал</span></div>
             </div>
         </div>
     </header>
 
     <nav class="sidebar" id="main-sidebar">
-        <a class="sidebar-item active">
-            <i class="fas fa-home"></i>
-            <span>Главная</span>
-        </a>
-        <a class="sidebar-item">
-            <i class="fas fa-fire"></i>
-            <span>Популярное</span>
-        </a>
-        <a class="sidebar-item">
-            <i class="fas fa-compass"></i>
-            <span>Открытия</span>
-        </a>
-        <a class="sidebar-item">
-            <i class="fas fa-film"></i>
-            <span>Подписки</span>
-        </a>
-        
+        <a class="sidebar-item active"><i class="fas fa-home"></i><span>Главная</span></a>
+        <a class="sidebar-item"><i class="fas fa-fire"></i><span>Популярное</span></a>
+        <a class="sidebar-item"><i class="fas fa-compass"></i><span>Открытия</span></a>
+        <a class="sidebar-item"><i class="fas fa-film"></i><span>Подписки</span></a>
         <div class="sidebar-divider"></div>
-        
-        <a class="sidebar-item">
-            <i class="fas fa-photo-video"></i>
-            <span>Библиотека</span>
-        </a>
-        <a class="sidebar-item">
-            <i class="fas fa-history"></i>
-            <span>История</span>
-        </a>
-        <a class="sidebar-item">
-            <i class="fas fa-clock"></i>
-            <span>Смотреть позже</span>
-        </a>
-        <a class="sidebar-item">
-            <i class="fas fa-thumbs-up"></i>
-            <span>Понравившиеся</span>
-        </a>
-        
-        <div class="sidebar-divider"></div>
-        
-        <h3>Подписки</h3>
-        <a class="sidebar-item">
-            <i class="fas fa-user-circle"></i>
-            <span>Креативный Дизайн</span>
-        </a>
-        <a class="sidebar-item">
-            <i class="fas fa-user-circle"></i>
-            <span>ТехноЛогика</span>
-        </a>
-        <a class="sidebar-item">
-            <i class="fas fa-user-circle"></i>
-            <span>ГеймТайм</span>
-        </a>
-        <a class="sidebar-item">
-            <i class="fas fa-user-circle"></i>
-            <span>Кулинарный Рай</span>
-        </a>
+        <a class="sidebar-item"><i class="fas fa-photo-video"></i><span>Библиотека</span></a>
+        <a class="sidebar-item"><i class="fas fa-history"></i><span>История</span></a>
+        <a class="sidebar-item"><i class="fas fa-clock"></i><span>Смотреть позже</span></a>
+        <a class="sidebar-item"><i class="fas fa-thumbs-up"></i><span>Понравившиеся</span></a>
     </nav>
 
     <main class="main-content" id="main-content">
         <div class="banner">
             <h1>Добро пожаловать в CHEBTUBE STUDIO</h1>
-            <p>Платформа нового поколения для просмотра и загрузки видео. Эксклюзивный контент, образовательные программы и развлекательные шоу.</p>
+            <p>Платформа нового поколения для просмотра и загрузки видео.</p>
             <button id="start-watching">Начать просмотр</button>
         </div>
-
         <div class="section-title">
             <h2><i class="fas fa-star"></i> Рекомендуем для вас</h2>
-            <a href="#">Показать все <i class="fas fa-chevron-right"></i></a>
         </div>
-        <div class="videos-grid" id="featured-videos">
-            </div>
-
+        <div class="videos-grid" id="featured-videos"></div>
         <div class="section-title">
             <h2><i class="fas fa-chart-line"></i> Популярное сейчас</h2>
-            <a href="#">Показать все <i class="fas fa-chevron-right"></i></a>
         </div>
-        <div class="videos-grid" id="trending-videos">
-            </div>
+        <div class="videos-grid" id="trending-videos"></div>
     </main>
 
     <div class="auth-container" id="auth-container">
-        <div class="close-auth" id="close-auth">&times;</div>
+        <div class="close-auth" id="close-auth">×</div>
         <div class="auth-form">
-            <div class="auth-header">
-                <h2>CHEBTUBE STUDIO</h2>
-            </div>
+            <div class="auth-header"><h2>CHEBTUBE STUDIO</h2></div>
             <div class="auth-tabs">
                 <div class="auth-tab active" id="login-tab">Вход</div>
                 <div class="auth-tab" id="register-tab">Регистрация</div>
             </div>
             <div class="auth-body">
                 <form id="login-form">
-                    <div class="form-group">
-                        <label for="login-email">Email</label>
-                        <input type="email" id="login-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">Пароль</label>
-                        <input type="password" id="login-password" required>
-                    </div>
+                    <div class="form-group"><label for="login-email">Email</label><input type="email" id="login-email" required></div>
+                    <div class="form-group"><label for="login-password">Пароль</label><input type="password" id="login-password" required></div>
                     <button type="submit" class="auth-btn">Войти</button>
                 </form>
-                
                 <form id="register-form" style="display: none;">
-                    <div class="form-group">
-                        <label for="register-name">Имя канала</label>
-                        <input type="text" id="register-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-email">Email</label>
-                        <input type="email" id="register-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-password">Пароль</label>
-                        <input type="password" id="register-password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-confirm">Подтвердите пароль</label>
-                        <input type="password" id="register-confirm" required>
-                    </div>
+                    <div class="form-group"><label for="register-name">Имя канала</label><input type="text" id="register-name" required></div>
+                    <div class="form-group"><label for="register-email">Email</label><input type="email" id="register-email" required></div>
+                    <div class="form-group"><label for="register-password">Пароль</label><input type="password" id="register-password" required></div>
+                    <div class="form-group"><label for="register-confirm">Подтвердите пароль</label><input type="password" id="register-confirm" required></div>
                     <button type="submit" class="auth-btn">Зарегистрироваться</button>
                 </form>
-                
-                <div class="auth-footer">
-                    <p>Продолжая, вы соглашаетесь с нашими <a href="#">Условиями</a> и <a href="#">Политикой конфиденциальности</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="upload-modal" id="upload-modal">
+        <div class="close-auth" id="close-upload">×</div>
+        <div class="upload-form">
+            <div class="upload-header"><h2><i class="fas fa-cloud-upload-alt"></i> Загрузка видео</h2></div>
+            <div class="upload-body">
+                <div class="upload-preview" id="thumbnail-preview">
+                    <i class="fas fa-image"></i><p>Нажмите для выбора ПРЕВЬЮ</p><img id="preview-img" src="" alt="Превью">
+                </div>
+                <div class="form-group">
+                    <label for="video-file-input">Файл видео (.mp4, .webm)</label>
+                    <input type="file" id="video-file-input" accept="video/mp4,video/webm" required style="background: var(--input-bg); padding: 10px; border-radius: 8px; width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label for="video-title">Название видео</label>
+                    <input type="text" id="video-title" placeholder="Введите название видео" required>
+                </div>
+                <div class="form-group">
+                    <label for="video-desc">Описание видео</label>
+                    <textarea id="video-desc" rows="3" placeholder="Добавьте описание к видео" class="form-group input"></textarea>
+                </div>
+                <div class="progress-container" id="progress-container" style="display: none;"><div class="progress-bar" id="progress-bar"></div></div>
+                <div class="upload-status" id="upload-status" style="display: none;">Загрузка: 0%</div>
+                <div class="upload-actions">
+                    <button class="cancel-btn" id="cancel-upload">Отмена</button>
+                    <button class="auth-btn" id="start-upload">Загрузить</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Этот блок нужно обновить в файлах index.html и studio.html -->
-<div class="upload-modal" id="upload-modal">
-    <div class="close-auth" id="close-upload">×</div>
-    <div class="upload-form">
-        <div class="upload-header">
-            <h2><i class="fas fa-cloud-upload-alt"></i> Загрузка видео</h2>
-        </div>
-        <div class="upload-body">
-            <!-- Поле для превью (остается без изменений) -->
-            <div class="upload-preview" id="thumbnail-preview">
-                <i class="fas fa-image"></i>
-                <p>Нажмите для выбора ПРЕВЬЮ</p>
-                <img id="preview-img" src="" alt="Превью">
-            </div>
-
-            <!-- НОВОЕ ПОЛЕ для видеофайла -->
-            <div class="form-group">
-                <label for="video-file-input">Файл видео</label>
-                <input type="file" id="video-file-input" accept="video/mp4,video/webm" style="background: var(--input-bg); padding: 10px; border-radius: 8px; width: 100%;">
-            </div>
-            
-            <div class="form-group">
-                <label for="video-title">Название видео</label>
-                <input type="text" id="video-title" placeholder="Введите название видео" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="video-desc">Описание видео</label>
-                <textarea id="video-desc" rows="3" placeholder="Добавьте описание к видео" class="form-group input" style="padding: 14px 18px; width: 100%; background: var(--input-bg); border: 1px solid #333; border-radius: 8px; color: var(--text); font-size: 16px;"></textarea>
-            </div>
-            
-            <div class="progress-container" id="progress-container">
-                <div class="progress-bar" id="progress-bar"></div>
-            </div>
-            <div class="upload-status" id="upload-status">Загрузка: 0%</div>
-            
-            <div class="upload-actions">
-                <button class="cancel-btn" id="cancel-upload">Отмена</button>
-                <button class="auth-btn" id="start-upload">Загрузить видео</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-    <script src="scripts.js"></script>
+    <script src="/scripts.js"></script>
 </body>
 </html>
